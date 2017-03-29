@@ -2,7 +2,6 @@ import Core
 import HTTP
 import Transport
 import AWSSignatureV4
-import Vapor
 
 @_exported import enum AWSSignatureV4.AWSError
 @_exported import enum AWSSignatureV4.AccessControlList
@@ -31,6 +30,11 @@ public struct S3 {
             secretKey: secretKey
         )
     }
+    
+    public init(bucket: String, accessKey: String, secretKey: String, region: Region) {
+        self.host = "\(bucket).\(region.host)"
+        signer = AWSSignatureV4(service: "s3", host: self.host, region: region, accessKey: accessKey, secretKey: secretKey)
+    }
 
     public func upload(bytes: Bytes, path: String, access: AccessControlList) throws {
         let url = generateURL(for: path)
@@ -40,8 +44,8 @@ public struct S3 {
             path: path
             //TODO(Brett): headers & AccessControlList
         )
-
-        let response = try EngineClient.put(url, headers, Body.data(bytes))
+        
+        let response = try BasicClient.put(url, headers: headers, body: Body.data(bytes))
         guard response.status == .ok else {
             guard let bytes = response.body.bytes else {
                 throw Error.invalidResponse(response.status)
@@ -55,7 +59,7 @@ public struct S3 {
         let url = generateURL(for: path)
         let headers = try signer.sign(path: path)
         
-        let response = try EngineClient.get(url, headers)
+        let response = try BasicClient.get(url, headers: headers)
         guard response.status == .ok else {
             guard let bytes = response.body.bytes else {
                 throw Error.invalidResponse(response.status)
@@ -72,7 +76,20 @@ public struct S3 {
     }
 
     public func delete(file: String) throws {
-        throw Error.unimplemented
+        let url = generateURL(for: file)
+        let headers = try signer.sign(
+            method: .delete,
+            path: file
+        )
+        
+        let response = try BasicClient.delete(url, headers: headers)
+        guard response.status == .noContent else {
+            guard let bytes = response.body.bytes else {
+                throw Error.invalidResponse(response.status)
+            }
+            
+            throw try ErrorParser.parse(bytes)
+        }
     }
 }
 

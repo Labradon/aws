@@ -1,5 +1,5 @@
 import Core
-import Crypto
+import Hash
 
 public enum Payload {
     case bytes(Bytes)

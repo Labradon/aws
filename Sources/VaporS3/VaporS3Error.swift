@@ -1,7 +1,7 @@
-import Debugging
-
-public enum VaporS3Error: Debuggable {
+public enum VaporS3Error: Error {
     case s3NotConfigured
+    case missingFile(String)
+    case configMissing(String)
 }
 
 extension VaporS3Error {

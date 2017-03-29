@@ -13,39 +13,48 @@ public final class Provider: Vapor.Provider {
     }
 
     /// Create an s3 instance with host, accessKey, secretKey, and region
-    public convenience init(host: String, accessKey: String, secretKey: String, region: Region) {
-        let s3 = S3(host: host, accessKey: accessKey, secretKey: secretKey, region: region)
+    public convenience init(bucket: String, accessKey: String, secretKey: String, region: Region) {
+        let s3 = S3(bucket: bucket, accessKey: accessKey, secretKey: secretKey, region: region)
         self.init(s3)
     }
 
-    /// Initialize the s3 instance from config
+    /// Initialize the s3 instance from configboo
     /// expects `s3.json` with following keys:
     /// host: String
     /// accessKey: String
     /// secretKey: String
     /// region: String -- matching official AWS Region list
     public convenience init(config: Config) throws {
-        guard let s3Config = config["s3"] else { throw ConfigError.missingFile("s3") }
-        guard let host = s3Config["host"]?.string else {
-            throw ConfigError.missing(key: ["host"], file: "s3", desiredType: String.self)
+        guard let s3Config = config["s3"] else { throw VaporS3Error.missingFile("s3") }
+        guard let bucket = s3Config["bucket"]?.string else {
+            throw VaporS3Error.configMissing("bucket")
         }
         guard let accessKey = s3Config["accessKey"]?.string else {
-            throw ConfigError.missing(key: ["accessKey"], file: "s3", desiredType: String.self)
+            throw VaporS3Error.configMissing("accessKey")
         }
         guard let secretKey = s3Config["secretKey"]?.string else {
-            throw ConfigError.missing(key: ["secretKey"], file: "s3", desiredType: String.self)
+            throw VaporS3Error.configMissing("secretKey")
         }
         guard let region = s3Config["region"]?.string.flatMap(Region.init) else {
-            throw ConfigError.missing(key: ["region"], file: "s3", desiredType: Region.self)
+            throw VaporS3Error.configMissing("region")
         }
-        self.init(host: host, accessKey: accessKey, secretKey: secretKey, region: region)
+        self.init(bucket: bucket, accessKey: accessKey, secretKey: secretKey, region: region)
     }
 
-    public func boot(_ drop: Droplet) throws {
+    
+    
+    public func boot(_ drop: Droplet) {
+        //
+    }
+    
+    public func afterInit(_ drop: Droplet) {
         drop.storage[s3StorageKey] = s3
     }
 
-    public func beforeRun(_ drop: Droplet) throws {}
+    public func beforeRun(_ drop: Droplet) {
+        print("Amazon S3 has been set up for host:\n\(s3.host)\n")
+    }
+    
 }
 
 extension Droplet {
