@@ -45,7 +45,7 @@ public struct S3 {
             //TODO(Brett): headers & AccessControlList
         )
         
-        let response = try BasicClient.put(url, headers: headers, body: Body.data(bytes))
+        let response = try FoundationClient.put(url, headers: headers, body: Body.data(bytes))
         guard response.status == .ok else {
             guard let bytes = response.body.bytes else {
                 throw Error.invalidResponse(response.status)
@@ -59,7 +59,7 @@ public struct S3 {
         let url = generateURL(for: path)
         let headers = try signer.sign(path: path)
         
-        let response = try BasicClient.get(url, headers: headers)
+        let response = try FoundationClient.get(url, headers: headers)
         guard response.status == .ok else {
             guard let bytes = response.body.bytes else {
                 throw Error.invalidResponse(response.status)
@@ -82,7 +82,7 @@ public struct S3 {
             path: file
         )
         
-        let response = try BasicClient.delete(url, headers: headers)
+        let response = try FoundationClient.delete(url, headers: headers)
         guard response.status == .noContent else {
             guard let bytes = response.body.bytes else {
                 throw Error.invalidResponse(response.status)
